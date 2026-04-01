@@ -1,0 +1,18 @@
+Face Mask Detection/
+│
+├── data/
+│   ├── with_mask/
+│   └── without_mask/
+│
+├── model/
+│   └── mask_model.h5
+│
+├── train.py
+├── detect.py
+└── face_detector/
+    ├── deploy.prototxt
+    └── res10_300x300_ssd_iter_140000.caffemodel
+
+
+    cv2.dnn.readNet() 
+    cv2.dnn.blobFromImage() 
