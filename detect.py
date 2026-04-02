@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from tensorflow.keras.models import load_model
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input #newly added
 
 model = load_model("model/mask_model.h5")
 
@@ -11,9 +12,13 @@ face_model = cv2.dnn.readNet(
 )
 
 cap = cv2.VideoCapture(0)
+if not cap.isOpened():
+    print("Error: Cannot access camera")
+    exit()
 
 while True:
     ret, frame = cap.read()
+    print(frame)
     h, w = frame.shape[:2]
 
     blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300),
@@ -35,13 +40,30 @@ while True:
                 continue
 
             face = cv2.resize(face, (224, 224))
-            face = face / 255.0
+            # face = face / 255.0
+            face=preprocess_input(face) #newly added
             face = np.reshape(face, (1, 224, 224, 3))
 
             pred = model.predict(face)
-            label = "Mask" if pred[0][0] > pred[0][1] else "No Mask"
+            # label = "Mask" if pred[0][0] > pred[0][1] else "No Mask"
+            # color = (0, 255, 0) if label == "Mask" else (0, 0, 255)
+            
+            mask_confidence = np.max(pred)
 
-            color = (0, 255, 0) if label == "Mask" else (0, 0, 255)
+            if mask_confidence < 0.6:
+                label = "Uncertain"
+                color = (0, 255, 255)  # Yellow
+
+            else:
+                if pred[0][0] > pred[0][1]:
+                    label = "Mask"
+                    color = (0, 255, 0)
+                else:
+                    label = "No Mask"
+                    color = (0, 0, 255)
+                    
+            text = f"{label} ({mask_confidence:.2f})"
+
 
             cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
             cv2.putText(frame, label, (startX, startY - 10),
